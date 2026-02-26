@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
 import './App.scss';
 import { GoodsList } from './GoodsList';
-
 import { getAll, get5First, getRedGoods } from './api/goods';
 import { Good } from './types/Good';
 
 export const App: React.FC = () => {
   const [goods, setGoods] = useState<Good[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // Універсальний loader з error handling
+  const loadGoods = (loader: () => Promise<Good[]>) => {
+    setError(null); // скидаємо попередню помилку
+
+    loader()
+      .then(setGoods)
+      .catch(() => {
+        setError('Failed to load goods. Please try again.');
+      });
+  };
 
   return (
     <div className="App">
@@ -15,7 +26,7 @@ export const App: React.FC = () => {
       <button
         type="button"
         data-cy="all-button"
-        onClick={() => getAll().then(setGoods)}
+        onClick={() => loadGoods(getAll)}
       >
         Load all goods
       </button>
@@ -23,7 +34,7 @@ export const App: React.FC = () => {
       <button
         type="button"
         data-cy="first-five-button"
-        onClick={() => get5First().then(setGoods)}
+        onClick={() => loadGoods(get5First)}
       >
         Load 5 first goods
       </button>
@@ -31,10 +42,13 @@ export const App: React.FC = () => {
       <button
         type="button"
         data-cy="red-button"
-        onClick={() => getRedGoods().then(setGoods)}
+        onClick={() => loadGoods(getRedGoods)}
       >
         Load red goods
       </button>
+
+      {/* Показ помилки */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <GoodsList goods={goods} />
     </div>
